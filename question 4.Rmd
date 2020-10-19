@@ -1,0 +1,114 @@
+---
+title: "Question 4"
+author: "Tamires Amorim, Yamei Li and Meirou Guan and Carol"
+date: "10/19/2020"
+output: github_document
+---
+
+```{r}
+load("~/R/acs2017_ny_data.RData")
+```
+
+```{r}
+attach(acs2017_ny)
+use_varb <- (AGE >= 25) & (AGE <= 55) & (LABFORCE == 2)
+dat_use <- subset(acs2017_ny,use_varb) # 
+detach()
+attach(dat_use)
+```
+
+
+```{r}
+model_temp1 <- lm(TRANTIME ~ educ_hs + educ_somecoll + educ_college + educ_advdeg)
+summary(model_temp1)
+plot(model_temp1)
+require(stargazer)
+stargazer(model_temp1, type = "text")
+```
+
+```{r}
+require(AER)
+```
+
+1. From the summary, we see that the intercept of commuting time is 3.367. 
+
+2. The Ordinary Least Squares (OLS) coefficient for:
+a) education high school =  11.359
+b) some college education = 14.535
+c) education college = 21.250
+d) education advanced degree = 19.768
+
+3. All estimators are statistically significant to the 95% level. Because the t-values are above the absolute critical value (critical t-value: 1.96) and the p-values are below 0.025, in this case less than 0.001 under normal circumstances mean that there is substantial evidence against the null hypothesis.
+
+4.The all hold a positive slope, although people at College may commute more than others in the model.  
+
+5. When we look at R^2, then we conclude that the model did not predict well the relation between commuting time and education attainments.  
+Which might be explained by the fact that education is a dummy variable (does not have a value, it is a yes or nor question, the linear regression will separate in two columns), the ones in the group of people with some level of education and the ones without it, for instance, workers that did not finish high school or for some reason did not declare they had a educational qualification. 
+We also observe that the relation is stronger for those with education attainaments, althought this model is not clear, because we are only comparing dummy variables. 
+
+```{r}
+# subset in order to plot...
+NNobs <- length(TRANTIME)
+set.seed(12345) # just so you can replicate and get same "random" choices
+graph_obs <- (runif(NNobs) < 0.1) # so something like just 1/10 as many obs
+dat_graph <-subset(dat_use,graph_obs)  
+
+plot(TRANTIME ~ jitter(educ_hs + educ_advdeg + educ_college + educ_somecoll, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
+# ^^ that looks like crap since Wages are soooooooo skew!  So try to find some sensible ylim = c(0, ??)
+
+plot(TRANTIME ~ jitter(educ_hs + educ_advdeg + educ_college + educ_somecoll, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
+# discus what you see in this plot
+
+# change this line to fit your regression
+to_be_predicted2 <- data.frame(AGE = 25:55, educ_hs = 0, educ_somecoll = 0, educ_college = 1, educ_advdeg = 0)
+to_be_predicted2$yhat <- predict(model_temp1, newdata = to_be_predicted2)
+
+lines(yhat ~ educ_hs, data = to_be_predicted2)
+```
+
+#### Now I will include more variables and observe what happens with the first model, if there is an improvement.
+
+Adding age and race/ethnicity:
+```{r}
+model_temp2 <- lm(TRANTIME ~ AGE + female + AfAm + Asian + Amindian + race_oth + Hispanic + educ_hs + educ_somecoll + educ_college + educ_advdeg)
+summary(model_temp2)
+plot(model_temp2)
+require(stargazer)
+stargazer(model_temp2, type = "text")
+```
+1. From the summary, we see that the intercept of commuting time is 23.918 (higher slope, given multiple variables). 
+
+2. The Ordinary Least Squares (OLS) coefficient for female, amindian are negative, and age has smaller slope than the rest of the variables:
+a) female =  -3.159
+b) amindian = -2.034
+c) age = 0.042
+The conclusion I draw is that women might spend less time commuting, because most of the married women would choose working places closer from home,they might feel more responsible for household tasks.
+The amindian, might be because they usually stay in their own community. And age has the smallest slope because the age net effect on commuting time is smaller. 
+
+3. Different from the first model, not all the estimators are statistically significant to the 95% level. Because for amindian the t-value is below the absolute critical value (critical t-value: 1.96) for this specific regressor  there is not  substantial evidence against the null hypothesis.
+
+4. When we look at R^2, then we conclude that the model did not predict well the relation between commuting time and the regressors, althought it was greater level than the first model given the including more variables.  
+
+```{r}
+# subset in order to plot...
+NNobs <- length(TRANTIME)
+set.seed(12345) # just so you can replicate and get same "random" choices
+graph_obs <- (runif(NNobs) < 0.1) # so something like just 1/10 as many obs
+dat_graph <-subset(dat_use,graph_obs)  
+
+plot(TRANTIME ~ jitter( AGE + female + AfAm + Asian + Amindian + race_oth + Hispanic + educ_hs + educ_advdeg + educ_college + educ_somecoll, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
+# ^^ that looks like crap since Wages are soooooooo skew!  So try to find some sensible ylim = c(0, ??)
+
+plot(TRANTIME ~ jitter( AGE + female + AfAm + Asian + Amindian + race_oth + Hispanic + educ_hs + educ_advdeg + educ_college + educ_somecoll, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
+# discus what you see in this plot
+
+# change this line to fit your regression
+to_be_predicted3 <- data.frame(female = 1,AGE = 25:55, educ_hs = 0, educ_somecoll = 0, educ_college = 1, educ_advdeg = 0, AfAm = 1, Amindian = 1, race_oth = 1, Hispanic = 1, Asian = 1 )
+to_be_predicted3$yhat <- predict(model_temp2, newdata = to_be_predicted3)
+
+lines(yhat ~ AGE, data = to_be_predicted3)
+```
+
+From the second graph, my guess is that since the Afimindian, did not show a relation, when we run the regression that is taken into consideration, implying that I do not have enough evidence to reject the null hyphotesis. 
+
+
