@@ -5,10 +5,16 @@ date: "10/11/2020"
 output: github_document 
 ---
 
-```{r}
-load("workspace.RData")
+```{r , include =FALSE}
+load("~/R/acs2017_ny_data.RData")
 ```
 
+
+```{r workspace, include=FALSE}
+detach()
+require(stargazer)
+require(AER)
+```
 
 #### Homework 4
 
@@ -16,12 +22,6 @@ Linear Regression Exercise:
 
 The following is interested in finding the relationship between wage and women with higher academic degree level, the goal is to understand if their advanced degree explains their wages. 
 
-
-First we converted the Education attainment as advanced degree from a factor to a numerical value: 
-```{r}
-acs2017_ny$educ_advdeg <- factor(acs2017_ny$EDUCD)
-acs2017_ny$educ_advdeg <- as.numeric(acs2017_ny$educ_advdeg)
-```
 
 
 Second we defined the subgroup, limiting the research for ages between 25 and 55 years old, currently working, and worked last year from 48 to 52 weeks intervalled, and working hours greater or equal to 35 hours per week.
@@ -36,7 +36,7 @@ attach(dat_use)
 Now we want to perform a linear regression to determine the coefficients of a linear model, in our specific case we want to predict the wage as explained by female education, here we included age to have a defined age group in the analysis. 
 Using the lm function we have:
 ```{r}
-fit <- lm(INCWAGE ~  educ_advdegCode + female + AGE, data = acs2017_ny)
+fit <- lm(INCWAGE ~  educ_advdeg + female + AGE, data = acs2017_ny)
 ```
 
 
@@ -52,7 +52,7 @@ mtext(lmlab, 3, line=-2)
 
 Now we want to visualize the output and understand the relation the variables hold: 
 ```{r}
-model_temp1 <- lm(INCWAGE ~ educ_advdegCode + female + AGE)
+model_temp1 <- lm(INCWAGE ~ educ_advdeg + female + AGE, family = binomial, data = dat_use)
 summary(model_temp1)
 plot(model_temp1)
 require(stargazer)
@@ -81,26 +81,39 @@ set.seed(12345) # just so you can replicate and get same "random" choices
 graph_obs <- (runif(NNobs) < 0.1) # so something like just 1/10 as many obs
 dat_graph <-subset(dat_use,graph_obs)  
 
-plot(INCWAGE ~ jitter(educ_advdegCode, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
+plot(INCWAGE ~ jitter(AGE, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
 
-plot(INCWAGE ~ jitter(educ_advdegCode, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
+plot(INCWAGE ~ jitter(AGE, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
 # discus what you see in this plot
 
 # change this line to fit your regression
-to_be_predicted2 <- data.frame(AGE = 25:55, female = 1, educ_advdegCode = 0)
+to_be_predicted2 <- data.frame(AGE = 25:55, female = 0, educ_advdeg = 0)
 to_be_predicted2$yhat <- predict(model_temp1, newdata = to_be_predicted2)
 
-lines(yhat ~ educ_advdegCode, data = to_be_predicted2)
+lines(yhat ~ AGE, data = to_be_predicted2)
 ```
+
+```{r}
+NNobs <- length(INCWAGE)
+set.seed(12345) # just so you can replicate and get same "random" choices
+graph_obs <- (runif(NNobs) < 0.1) # so something like just 1/10 as many obs
+dat_graph <-subset(dat_use,graph_obs)  
+
+plot(INCWAGE ~ jitter(female, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), data = dat_graph)
+
+plot(INCWAGE ~ jitter(female, factor = 2), pch = 16, col = rgb(0.5, 0.5, 0.5, alpha = 0.2), ylim = c(0,150000), data = dat_graph)
+# discus what you see in this plot
+
+# change this line to fit your regression
+to_be_predicted2 <- data.frame(AGE = 25:55, female = 1, educ_advdeg = 1)
+to_be_predicted2$yhat <- predict(model_temp1, newdata = to_be_predicted2)
+
+lines(yhat ~ female, data = to_be_predicted2)
+```
+
 
 
 ```{r}
 detach()
-```
-
-
-
-```{r}
-save.image("workspace.RData")
 ```
 
